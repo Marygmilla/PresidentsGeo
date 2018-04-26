@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+	.state-boundary {
+	  fill: "black";
+	  stroke: "black";
+	}
+
+	 .tooltip {
+        position: absolute;
+        font-size: 12px;
+        font: 12px sans-serif;
+        width:  auto;
+        height: auto;
+        pointer-events: none;
+        background-color: white;
+    }
+}
+</style>
+<head>
+	<title>Presidents Birth Places</title>
+	<div id="graph">
+
+	<script src="http://d3js.org/queue.v1.min.js"></script>
+	<script src="http://d3js.org/topojson.v1.min.js"></script>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCAo7SCv0mnZeLnVRRzw-Pn7Bn2zviY170"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-composite-projections/0.3.5/albersUsa-proj.min.js"></script>
+
+</head>
+<body>
+	<script type="text/javascript">
+		//stores president's data
+		var presidents = [{}];
+		var birth_place = [];
+		var addresses = [];
+
+		var lat_long = [
+			{
+				lat: 38.1773528,
+				lng:-77.18608840000002
+			},
+			{
+				lat: 42.2079017,
+				lng:  -71.00400130000003
+			},
+			{
+				lat: 34.9245935,
+				lng: -80.74340189999998
+			},
+			{
+				lat: 42.3953617,
+				lng: -73.69789830000002
+			},
+			{
+				lat: 37.3182038,
+				lng: -77.17941819999999
+			},
+			{
+				lat: 37.340981,
+				lng: -77.08163680000001
+			},
+			{
+				lat: 35.0832014,
+				lng: -80.89229569999998
+			},
+			{
+				lat: 38.24266739999999,
+				lng: -77.97386499999999
+			},
+			{
+				lat: 42.6606262,
+				lng: -76.43076989999997
+			},
+			{
+				lat: 43.114728,
+				lng: -71.89504899999997
+			},
+			{
+				lat: 39.82786979999999,
+				lng: -77.90333140000001
+			},
+			{
+				lat: 37.5739497,
+				lng: -85.73996060000002
+			},
+			{
+				lat: 35.7795897,
+				lng: -78.63817870000003
+			},
+			{
+				lat:38.8945107,
+				lng: -84.23382429999998
+			},
+			{
+				lat:40.2986724,
+				lng:-83.06796500000002
+			},
+			{
+				lat: 41.4497758,
+				lng: -81.4806744
+			},
+			{
+				lat: 44.8019921,
+				lng: -72.9456935
+			},
+			{
+				lat:40.8398218,
+				lng: -74.27653659999999
+			}
+			,
+			{
+				lat: 39.1525576,
+				lng:-84.74800379999999
+			},
+			{
+				lat: 40.8398218,
+				lng: -74.27653659999999
+			},
+			{
+				lat: 41.1828353,
+				lng: -80.76535799999999
+			},
+			{
+				lat: 36.1023715,
+				lng:-115.17455589999997
+			},
+			{
+				lat: 39.1031182,
+				lng: -84.51201960000003
+			},
+			{
+				lat: 38.149576,
+				lng: -79.07169579999999
+			},
+			{
+				lat: 40.7078356,
+				lng: -82.71656610000002
+			},
+			{
+				lat: 43.5303463,
+				lng: -72.7385635
+			},
+			{
+				lat: 43.5303463,
+				lng:  -72.7385635
+			},
+			{
+				lat:  41.6714086,
+				lng: -91.3465521
+			},
+			{
+				lat: 41.7667602,
+				lng: -73.90152460000002
+			},
+			{
+				lat: 37.49504780000001,
+				lng: -94.2766148
+			},
+			{
+				lat:33.7556593,
+				lng:  -96.53665799999999
+			},
+			{
+				lat: 42.33176419999999,
+				lng:-71.12116349999997
+			},
+			{
+				lat: 30.2360359,
+				lng:  -98.66447690000001
+			},
+			{
+				lat:33.88850350000001,
+				lng: -117.81325709999999
+			},
+			{
+				lat: 33.88850350000001,
+				lng:   -117.81325709999999
+			},
+			{
+				lat:41.2565369,
+				lng: -95.93450339999998
+			},
+			{
+				lat: 32.0340508,
+				lng: -84.3926912
+			},
+			{
+				lat: 41.63031,
+				lng: -89.78621770000001
+			},
+			{
+				lat: 42.2495321,
+				lng:-71.06616529999997
+			},
+			{
+				lat: 33.6670615,
+				lng: -93.5915665
+			},
+			{
+				lat: 41.308274,
+				lng: -72.92788350000001
+			}
+		];
+
+		//read data in from the csv
+		d3.csv("scholastic_president.csv", function(d){
+			var i = 0;
+			d.forEach(function(data){
+				var birth = {
+					geo: data.Born
+				};
+				lat_long[i]["party"] = data.Party;
+				i++;
+			});
+		});
+
+		d3.csv("wiki_presidents (1).csv", function(d){
+			var i = 0;
+			d.forEach(function(data){
+				lat_long[i]["who"] = data.President;
+				lat_long[i]["num"] = data.Presidency;
+				lat_long[i]["term"] = data.Term;
+				lat_long[i]["vp"] = data["Vice President"];
+				i++;
+			});
+		});
+
+		var width = 960,
+			height = 600;
+
+		var svg = d3.select("#graph")
+			.append('svg')
+			.attr('width', width)
+			.attr('height', height)
+			.attr('fill', "white")
+
+		var projection = d3.geo.albersUsa()
+				.scale(1280)
+				.translate([width/2, height/2]),
+			path = d3.geo.path()
+				.projection(projection);
+
+		var tooltip = d3.select("body").append("div")
+			.attr("class", "tooltip")
+			.style("opacity", 0);
+
+		//color the red dots for republican / blue for democratic
+		function colorscale(data) {
+			if (data.party.trim() === "Democratic")
+				return "blue";
+			else if (data.party.trim() === "Whig")
+				return "grey";
+			else if (data.party.trim() === "Democratic-Republican")
+				return 	"rgb(222,184,135)";
+			else
+				return "red";
+		}
+
+		//add all of the circle dots
+		function addCircle(result) {
+			var data = result;
+			svg.selectAll("circle")
+				.data(data)
+				.enter().append("circle")
+					.attr("r", 4)
+					.attr("transform", function(d,i) {
+						return "translate(" + projection([
+							d.lng,
+							d.lat
+						]) + ")";
+					})
+					.attr("fill", function(d,i) { return colorscale(d)})
+					.on("mouseover", function(d) {
+						generateGeoCodes(d);
+						var color = "black";
+						var html = d.who + "<span style='color:" + color + ";'>" + "<br/>"
+						+ d.party + "<br/>" + "<span style='color:" + color + ";'>"
+						+ d.geo + "<br/>" + "<span style='color:" + color + ";'>"
+						+ d.term + "<br/>" + "<span style='color:" + color + ";'>"
+						+ d.vp + "<br/>" + "<span style='color:" + color + ";'>";
+						tooltip.transition()
+							.duration(200)
+							.style("opacity", .9)
+							tooltip.html(html)
+							.style('left', d3.event.pageX + 10 + 'px')
+							.style("top", (d3.event.pageY - 28) + "px")
+					})
+					.on("mouseout", function(d){
+						tooltip.transition()
+							.duration(500)
+							.style("opacity", 0);
+					});
+		}
+
+		queue()
+			.defer(d3.json, "us.json")
+			.await(function (err, US){
+				var states = svg.append("g")
+						.attr("class", "states")
+						.selectAll("g")
+						.data(topojson.feature(US, US.objects.states).features)
+						.enter()
+						.append("g");
+
+				states.append("path")
+					.attr("d", path)
+					.attr("stroke", "black");
+
+
+				addCircle(lat_long);
+			});
+
+		//convert the lat/long coordinates to the city
+		var geocoder = new google.maps.Geocoder();
+		function generateGeoCodes(value) {
+				var latlng = {lat: value.lat, lng: value.lng}
+				geocoder.geocode({'location': latlng}, function(results, status){
+						if(status == google.maps.GeocoderStatus.OK){
+								value.geo = results[0].formatted_address;
+							} else {
+								alert("Geocode was not successful: " + status);
+							}
+			 })
+		}
+
+	</script>
+</body>
+</html>
